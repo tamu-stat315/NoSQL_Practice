@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "description": "Exact Notebook 2 query text, with expected raw stdout from successful pinned-image AMD64 baseline. Only CRLF is normalized; no whitespace trimming.",
+  "source": "STUDENT_RELEASE/02_Class_Notebooks/04_NoSQL_Databases/02_working_with_nosql.md",
+  "baseline_report": "_qa/nosql_classroom_20261023/runtime_validation.json",
+  "baseline_run_id": "20261023T155330Z",
+  "cases": [
+    {
+      "id": "m-count",
+      "engine": "mongo",
+      "code": "db.restaurants.countDocuments()",
+      "expected_stdout": "8\n"
+    },
+    {
+      "id": "m-one",
+      "engine": "mongo",
+      "code": "db.restaurants.findOne({_id: \"R01\"})",
+      "expected_stdout": "{\n  _id: 'R01',\n  name: 'Northgate Noodles',\n  cuisine: 'Chinese',\n  address: { area: 'Northgate', street: '12 College Ave' },\n  price_band: 1,\n  dietary_options: [ 'vegetarian', 'vegan' ],\n  inspection: { score: 96 },\n  outdoor_seating: true\n}\n"
+    },
+    {
+      "id": "r-announcement",
+      "engine": "redis",
+      "code": "GET stat315:announcement",
+      "expected_stdout": "Final round starts at 4 pm\n"
+    },
+    {
+      "id": "m-area",
+      "engine": "mongo",
+      "code": "db.restaurants.countDocuments({\"address.area\": \"Northgate\"})",
+      "expected_stdout": "5\n"
+    },
+    {
+      "id": "m-diet",
+      "engine": "mongo",
+      "code": "db.restaurants.countDocuments({\"address.area\": \"Northgate\", dietary_options: \"vegan\"})",
+      "expected_stdout": "4\n"
+    },
+    {
+      "id": "m-matches",
+      "engine": "mongo",
+      "code": "db.restaurants.find({\"address.area\": \"Northgate\", dietary_options: \"vegan\", price_band: 1}).sort({_id: 1}).toArray()",
+      "expected_stdout": "[\n  {\n    _id: 'R01',\n    name: 'Northgate Noodles',\n    cuisine: 'Chinese',\n    address: { area: 'Northgate', street: '12 College Ave' },\n    price_band: 1,\n    dietary_options: [ 'vegetarian', 'vegan' ],\n    inspection: { score: 96 },\n    outdoor_seating: true\n  },\n  {\n    _id: 'R02',\n    name: 'Campus Curry',\n    cuisine: 'Indian',\n    address: { area: 'Northgate', street: '24 College Ave' },\n    price_band: 1,\n    dietary_options: [ 'vegetarian', 'vegan' ],\n    inspection: { score: 98 }\n  },\n  {\n    _id: 'R06',\n    name: 'Market Tacos',\n    cuisine: 'Mexican',\n    address: { area: 'Northgate', street: '18 Market St' },\n    price_band: 1,\n    dietary_options: [ 'vegetarian', 'vegan' ],\n    inspection: { score: 93 },\n    outdoor_seating: true\n  },\n  {\n    _id: 'R08',\n    name: 'Green Bowl',\n    cuisine: 'Salads',\n    address: { area: 'Northgate', street: '9 Oak St' },\n    price_band: 1,\n    dietary_options: [ 'vegetarian', 'vegan' ],\n    inspection: { score: 97 },\n    outdoor_seating: null\n  }\n]\n"
+    },
+    {
+      "id": "m-project",
+      "engine": "mongo",
+      "code": "db.restaurants.find(\n  {\"address.area\": \"Northgate\", dietary_options: \"vegan\", price_band: 1},\n  {_id: 0, name: 1, \"inspection.score\": 1}\n).sort({_id: 1}).toArray()",
+      "expected_stdout": "[\n  { name: 'Northgate Noodles', inspection: { score: 96 } },\n  { name: 'Campus Curry', inspection: { score: 98 } },\n  { name: 'Market Tacos', inspection: { score: 93 } },\n  { name: 'Green Bowl', inspection: { score: 97 } }\n]\n"
+    },
+    {
+      "id": "m-top",
+      "engine": "mongo",
+      "code": "db.restaurants.find(\n  {\"address.area\": \"Northgate\", dietary_options: \"vegan\", price_band: 1},\n  {_id: 0, name: 1, \"inspection.score\": 1}\n).sort({\"inspection.score\": -1, _id: 1}).limit(3).toArray()",
+      "expected_stdout": "[\n  { name: 'Campus Curry', inspection: { score: 98 } },\n  { name: 'Green Bowl', inspection: { score: 97 } },\n  { name: 'Northgate Noodles', inspection: { score: 96 } }\n]\n"
+    },
+    {
+      "id": "m-downtown",
+      "engine": "mongo",
+      "code": "db.restaurants.find(\n  {\"address.area\": \"Downtown\", dietary_options: \"vegan\", price_band: 1},\n  {_id: 0, name: 1, \"inspection.score\": 1}\n).sort({\"inspection.score\": -1, _id: 1}).limit(3).toArray()",
+      "expected_stdout": "[]\n"
+    },
+    {
+      "id": "r-before",
+      "engine": "redis",
+      "code": "ZRANGE stat315:leaderboard 0 2 REV WITHSCORES",
+      "expected_stdout": "player:101\n180\nplayer:102\n150\nplayer:100\n120\n"
+    },
+    {
+      "id": "r-increment",
+      "engine": "redis",
+      "code": "ZINCRBY stat315:leaderboard 100 player:100",
+      "expected_stdout": "220\n"
+    },
+    {
+      "id": "r-after",
+      "engine": "redis",
+      "code": "ZRANGE stat315:leaderboard 0 2 REV WITHSCORES",
+      "expected_stdout": "player:100\n220\nplayer:101\n180\nplayer:102\n150\n"
+    },
+    {
+      "id": "r-name",
+      "engine": "redis",
+      "code": "HGET stat315:player:100 name",
+      "expected_stdout": "Alex\n"
+    },
+    {
+      "id": "m-missing",
+      "engine": "mongo",
+      "code": "db.restaurants.find({outdoor_seating: {$exists: false}}, {_id: 0, name: 1, outdoor_seating: 1}).sort({_id: 1}).toArray()",
+      "expected_stdout": "[ { name: 'Campus Curry' }, { name: 'Library Cafe' } ]\n"
+    },
+    {
+      "id": "m-null",
+      "engine": "mongo",
+      "code": "db.restaurants.find({outdoor_seating: null}, {_id: 0, name: 1, outdoor_seating: 1}).sort({_id: 1}).toArray()",
+      "expected_stdout": "[\n  { name: 'Campus Curry' },\n  { name: 'Library Cafe' },\n  { name: 'Green Bowl', outdoor_seating: null }\n]\n"
+    },
+    {
+      "id": "m-update",
+      "engine": "mongo",
+      "code": "db.restaurants.updateOne({_id: \"R02\"}, {$set: {outdoor_seating: true}})",
+      "expected_stdout": "{\n  acknowledged: true,\n  insertedId: null,\n  matchedCount: 1,\n  modifiedCount: 1,\n  upsertedCount: 0\n}\n"
+    },
+    {
+      "id": "m-read-update",
+      "engine": "mongo",
+      "code": "db.restaurants.findOne({_id: \"R02\"}, {_id: 0, name: 1, outdoor_seating: 1})",
+      "expected_stdout": "{ name: 'Campus Curry', outdoor_seating: true }\n"
+    }
+  ]
+}

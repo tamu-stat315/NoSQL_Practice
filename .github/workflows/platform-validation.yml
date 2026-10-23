@@ -1,0 +1,58 @@
+name: NoSQL platform validation
+
+# A bounded test branch only; this does not change the released course files.
+on:
+  push:
+    branches: [test/windows-arm64-20261023]
+
+permissions:
+  contents: read
+
+jobs:
+  native-arm64:
+    name: Native ARM64 database workflow
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Assert native ARM64 host
+        run: |
+          set -euo pipefail
+          test "$RUNNER_ARCH" = ARM64
+          test "$(uname -m)" = aarch64
+          docker version
+          docker compose version
+      - name: Test exact released kit and all notebook queries
+        run: python3 tests/platform_smoke.py --kit . --fixtures tests/query_cases.json --output-dir qa_results/arm64 --expected-arch arm64
+      - name: Preserve test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-arm64-results
+          path: qa_results/arm64/
+          retention-days: 7
+          if-no-files-found: warn
+
+  windows-git-bash:
+    name: Windows Git Bash and Compose configuration (not Desktop E2E)
+    runs-on: windows-2025
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Test shell, paths, CRLF, and configuration
+        run: python tests/windows_probe.py --kit . --output-dir qa_results/windows
+      - name: Preserve test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-shell-results
+          path: qa_results/windows/
+          retention-days: 7
+          if-no-files-found: warn
