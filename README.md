@@ -57,7 +57,7 @@ Starting again keeps saved changes. To restore the eight fictional restaurant re
 docker compose exec -T mongo mongosh --quiet < mongo_seed/01_restaurants.js
 ```
 
-**This replaces the practice restaurant collection and discards changes you made to it.** It does not affect the SQL environment. Reloading `redis_seed.txt` restores only the supplied Redis teaching keys. Do not use global cleanup commands, `FLUSHALL`, or `docker compose down --volumes` to solve a setup problem.
+**This restores the eight supplied restaurant documents and discards changes you made to those documents.** It leaves any additional documents you created in place and does not affect the SQL environment. Reloading `redis_seed.txt` restores only the supplied Redis teaching keys. Do not use global cleanup commands, `FLUSHALL`, or `docker compose down --volumes` to solve a setup problem.
 
 ## Files
 
