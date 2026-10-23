@@ -1,0 +1,7 @@
+DEL stat315:leaderboard stat315:player:100 stat315:player:101 stat315:player:102 stat315:player:103 stat315:announcement
+HSET stat315:player:100 name "Alex"
+HSET stat315:player:101 name "Blair"
+HSET stat315:player:102 name "Casey"
+HSET stat315:player:103 name "Drew"
+ZADD stat315:leaderboard 120 player:100 180 player:101 150 player:102 90 player:103
+SET stat315:announcement "Final round starts at 4 pm"

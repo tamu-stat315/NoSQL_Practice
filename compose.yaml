@@ -1,0 +1,42 @@
+name: stat315-nosql-practice
+
+# Local classroom practice only. No host ports or external network access.
+# The database clients run inside these containers through docker compose exec.
+services:
+  mongo:
+    image: mongo:8.0@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907
+    command: ["mongod", "--bind_ip", "127.0.0.1", "--wiredTigerCacheSizeGB", "0.25"]
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo_seed:/docker-entrypoint-initdb.d:ro
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.getSiblingDB('stat315_nosql').restaurants.findOne({_id:'R01'}) ? 0 : 1)"]
+      interval: 5s
+      timeout: 10s
+      retries: 24
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:8.2-alpine@sha256:b51665e66f00759be7c3152ad5ac3c66fb2f619c13ef62dea7cc1f9914524635
+    command: ["redis-server", "--bind", "127.0.0.1", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis_data:/data
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  default:
+    internal: true
+
+volumes:
+  mongo_data:
+  redis_data:
