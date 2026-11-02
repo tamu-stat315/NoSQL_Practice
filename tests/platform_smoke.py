@@ -202,6 +202,7 @@ try {
 } finally {
   probe.drop();
 }
+quit(0);
 """, "90-second Mongo read/write workload")["stdout"])
         report["kernel_compatibility_workload"] = workload
         check("Mongo read/write workload completes beyond 90 seconds", workload["durationMs"] >= 90000 and workload["rounds"] > 0 and workload["uptime"] >= 90)
