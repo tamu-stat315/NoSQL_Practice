@@ -176,6 +176,36 @@ def main():
         check("both actual images are requested native architecture", len(images) == 2 and all(i["Architecture"] == args.expected_arch and i["Os"] == "linux" for i in images))
         report["mounted_volumes"] = sorted({m["Name"] for c in containers for m in c["Mounts"] if m["Type"] == "volume"})
         check("automatic Mongo seed is eight documents", normalize(mongo("db.restaurants.countDocuments()", "Automatic first-start seed")["stdout"]) == "8\n")
+        allocator = json.loads(mongo("JSON.stringify(db.getSiblingDB('admin').serverStatus().tcmalloc.usingPerCPUCaches)", "Allocator cache mode")["stdout"])
+        check("MongoDB uses per-thread allocator caches", allocator is False)
+        workload = json.loads(mongo("""
+const probe = db.getCollection("__kernel_compat_probe");
+const started = Date.now();
+let rounds = 0;
+try {
+  while (Date.now() - started < 90000) {
+    probe.updateOne({_id: "probe"}, {$set: {round: rounds}}, {upsert: true});
+    if (probe.findOne({_id: "probe"}).round !== rounds)
+      throw new Error("Workload read-after-write mismatch");
+    if (db.restaurants.countDocuments() !== 8)
+      throw new Error("Practice seed changed during workload");
+    rounds++;
+    sleep(100);
+  }
+  const status = db.getSiblingDB("admin").serverStatus();
+  print(JSON.stringify({
+    durationMs: Date.now() - started,
+    rounds: rounds,
+    usingPerCPUCaches: status.tcmalloc.usingPerCPUCaches,
+    uptime: status.uptime
+  }));
+} finally {
+  probe.drop();
+}
+""", "90-second Mongo read/write workload")["stdout"])
+        report["kernel_compatibility_workload"] = workload
+        check("Mongo read/write workload completes beyond 90 seconds", workload["durationMs"] >= 90000 and workload["rounds"] > 0 and workload["uptime"] >= 90)
+        check("per-thread allocator remains active after workload", workload["usingPerCPUCaches"] is False)
         reset("First")
         initial = snapshot("Initial")
         reset("Repeated")
@@ -224,3 +254,4 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

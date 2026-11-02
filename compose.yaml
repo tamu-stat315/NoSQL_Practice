@@ -5,6 +5,11 @@ name: stat315-nosql-practice
 services:
   mongo:
     image: mongo:8.0@sha256:4a4ab5d4834207389e0d7270fac988e21ffedccecba77991a552f755df229907
+    # Use per-thread allocator caches to avoid the Linux 6.19-7.0.13 rseq issue.
+    # Applies to native ARM64 (Apple Silicon) and AMD64 without changing saved data.
+    # https://github.com/docker-library/mongo/discussions/748
+    environment:
+      GLIBC_TUNABLES: "glibc.pthread.rseq=1"
     command: ["mongod", "--bind_ip", "127.0.0.1", "--wiredTigerCacheSizeGB", "0.25"]
     volumes:
       - mongo_data:/data/db
